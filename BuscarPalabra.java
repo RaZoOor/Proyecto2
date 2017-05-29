@@ -2,31 +2,80 @@ import java.util.ArrayList;
 import java.util.*;
 
 public class BuscarPalabra{
-  public boolean buscarLetra(String palabra, int indice, int x, int y, ArrayList<String> sopa){
-    //ArrayList<Integer> newPos = new ArrayList<Integer>();
+
+  private ArrayList<int[]> buscarPrimeraLetra(String palabra, int indice, ArrayList<String> sopa){
+    ArrayList<int[]> coincidencias = new ArrayList<int[]>();
+    int[] posNoEncontrada = {-1, 0, 0};
+    ArrayList<int[]> noEncontrada = new ArrayList<int[]>();
+    noEncontrada.add(posNoEncontrada);
+
     for (int i = 0; i < sopa.size(); i++)
     {
       String aux = sopa.get(i);
       for (int j = 0; j < aux.length(); j++)
       {
-        //newPos.add(i);
-        //newPos.add(j);
+        int[] posicion = {i , j, 0};
+        if (aux.charAt(j) == palabra.charAt(indice))
+          coincidencias.add(posicion);
+      }
+    }
+    if (coincidencias.size() == 0)
+      return noEncontrada;
+    else
+      return coincidencias;
+  }
 
-        if (indice == palabra.length() - 1)
-          return true;
+  private ArrayList<int[]> generarEstadosPosibles(int[] pos, ArrayList<String> sopa, String palabra){
+    ArrayList<int[]> posibles = new ArrayList<int[]>();
+    int x = pos[0];
+    int y = pos[1];
+    int indice = pos[2];
 
-        else if (aux.charAt(j) == palabra.charAt(indice))
+    if (indice >= palabra.length() - 1)
+      return posibles;
+
+    else
+    {
+      char letraABuscar = palabra.charAt(indice);
+
+      for (int i = 0; i < sopa.size(); i++)
+      {
+        String aux = sopa.get(i);
+        for (int j = 0; j < aux.length(); j++)
         {
-          if (indice == 0)
-            return buscarLetra(palabra, indice + 1, i, j, sopa);
-
-          /* Movimiento izquierda derecha arriba o abajo */
-          else 
+          if (aux.charAt(j) == letraABuscar)
           {
-            return buscarLetra(palabra, indice + 1, i, j, sopa);
+            int[] newPos = {i, j, indice + 1};
+            posibles.add(newPos);
           }
         }
-        //newPos.clear();
+      }
+    }
+    return posibles;
+  }
+
+  private boolean buscarEnSopa(int[] pos, ArrayList<String> sopa, String palabra, ArrayList<int[]> abiertos){
+
+    if (pos[0] == -1)
+      return false;
+
+    else
+    {
+      if (abiertos.size() == 0)
+        abiertos.add(pos);
+
+      while (abiertos.size() != 0)
+      {
+        int[] m = new int[3];
+        m[0] = pos[0];
+        m[1] = pos[1];
+        m[2] = pos[2] + 1; //Siguiente letra
+
+        if (abiertos.size() > palabra.length() - 1)
+          return true;
+        abiertos.addAll(generarEstadosPosibles(m, sopa, palabra));
+        System.out.println(abiertos.size());
+        return buscarEnSopa(m, sopa, palabra, abiertos);
       }
     }
     return false;
@@ -38,8 +87,16 @@ public class BuscarPalabra{
     for (int i = 0; i < palabras.size(); i++)
     {
       String aux = palabras.get(i);
-      if (buscarLetra(aux, 0, 0, 0, sopa))
-        siPresentes.add(aux);
+      ArrayList<int[]> estados = new ArrayList<int[]>();
+      ArrayList<int[]> aux1 = buscarPrimeraLetra(aux, 0, sopa);
+      for (int j = 0; j < aux1.size(); j++)
+      {
+        if (buscarEnSopa(aux1.get(j), sopa, aux, estados))
+        {
+          siPresentes.add(aux);
+          break;
+        }
+      }
     }
     return siPresentes;
   }
